@@ -1,0 +1,7 @@
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: monitor
+value: 900
+globalDefault: false
+description: "monitor priority"

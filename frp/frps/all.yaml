@@ -1,0 +1,150 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: frps
+data:
+  frps.ini: |
+    [common]
+    bind_port = 30007
+    quic_bind_port = 30007
+    dashboard_port = 80
+    # token = # Replace with your FRP authentication token
+
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frps-dep
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frps
+  template:
+    metadata:
+      labels:
+        app: frps
+    spec:
+      priorityClassName: frp
+      tolerations:
+      - key: "node-role.kubernetes.io/small"
+        operator: "Exists"
+        effect: "NoSchedule"
+      - key: "node-role.kubernetes.io/master"
+        operator: "Exists"
+        effect: "NoSchedule"
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            preference:
+              matchExpressions:
+              - key: role
+                operator: In
+                values:
+                - main
+      containers:
+      - name: frps
+        image: snowdreamtech/frps:0.48.0
+        imagePullPolicy: IfNotPresent
+        resources:
+          requests:
+            memory: "100Mi"
+          limits:
+            memory: "100Mi"
+        ports:
+        - name: frp
+          containerPort: 30007
+          protocol: UDP
+        - name: dashboard
+          containerPort: 80
+          protocol: TCP
+        - name: home-ssh
+          containerPort: 6322
+          protocol: TCP
+        - name: archive-ssh
+          containerPort: 6422
+          protocol: TCP
+        - name: homi-ssh
+          containerPort: 6522
+          protocol: TCP
+        - name: home-nginx
+          containerPort: 63443
+          protocol: TCP
+        - name: archive-nginx
+          containerPort: 64443
+          protocol: TCP
+        - name: homi-nginx
+          containerPort: 65443
+          protocol: TCP
+        volumeMounts:
+        - name: frp-conf
+          mountPath: /etc/frp/frps.ini
+          subPath: frps.ini
+      volumes:
+      - name: frp-conf
+        configMap:
+          name: frps
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frps-svc
+spec:
+  type: ClusterIP
+  ports:
+    - name: frp
+      protocol: UDP
+      port: 30007
+      targetPort: 30007
+    - name: dashboard
+      protocol: TCP
+      port: 80
+      targetPort: 80
+    - name: home-nginx
+      protocol: TCP
+      port: 63443
+      targetPort: 63443
+    - name: archive-nginx
+      protocol: TCP
+      port: 64443
+      targetPort: 64443
+    - name: homi-nginx
+      protocol: TCP
+      port: 65443
+      targetPort: 65443
+  selector:
+    app: frps
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frps-public-svc
+spec:
+  type: NodePort
+  ports:
+    - name: frp
+      protocol: UDP
+      port: 30007
+      targetPort: 30007
+      nodePort: 30007
+    - name: home-ssh
+      protocol: TCP
+      port: 6322
+      targetPort: 6322
+      nodePort: 30322
+    - name: archive-ssh
+      protocol: TCP
+      port: 6422
+      targetPort: 6422
+      nodePort: 30422
+    - name: homi-ssh
+      protocol: TCP
+      port: 6522
+      targetPort: 6522
+      nodePort: 30522
+  selector:
+    app: frps

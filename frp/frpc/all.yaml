@@ -1,0 +1,79 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: frpc
+data:
+  frpc.ini: |
+    [common]
+    server_addr = frps-svc
+    server_port = 30007
+    protocol = quic
+    # token = # Replace with your FRP authentication token
+  
+    [kafka]
+    type = stcp
+    # sk = # Replace with your secret key for secure tunnel
+    local_ip = kafka.mq.svc.cluster.local
+    local_port = 9092
+
+    [prom-kube-state-metrics]
+    type = stcp
+    # sk = # Replace with your secret key for secure tunnel
+    local_ip = prom-kube-state-metrics.monitoring.svc.cluster.local
+    local_port = 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frpc-dep
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frpc
+  template:
+    metadata:
+      labels:
+        app: frpc
+    spec:
+      priorityClassName: frp
+      tolerations:
+      - key: "node-role.kubernetes.io/small"
+        operator: "Exists"
+        effect: "NoSchedule"
+      - key: "node-role.kubernetes.io/master"
+        operator: "Exists"
+        effect: "NoSchedule"
+      affinity:
+        podAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - frps
+              topologyKey: kubernetes.io/hostname
+      containers:
+      - name: frpc
+        image: snowdreamtech/frpc:0.48.0
+        imagePullPolicy: IfNotPresent
+        resources:
+          requests:
+            memory: "80Mi"
+          limits:
+            memory: "80Mi"
+        volumeMounts:
+        - name: frp-conf
+          mountPath: /etc/frp/frpc.ini
+          subPath: frpc.ini
+      volumes:
+      - name: frp-conf
+        configMap:
+          name: frpc
+
+---
+

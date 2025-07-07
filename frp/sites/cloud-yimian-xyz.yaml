@@ -1,0 +1,21 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: cloud-yimian-xyz-ing
+  namespace: frp
+  annotations:
+    #nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+    #nginx.ingress.kubernetes.io/ssl-passthrough: "true"
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: cloud.yimian.xyz
+    http:
+      paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: frps-svc
+              port: 
+                number: 63443

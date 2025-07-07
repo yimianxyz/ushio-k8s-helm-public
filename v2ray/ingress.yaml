@@ -1,0 +1,57 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: net-yimian-xyz-svc
+spec:
+  type: ExternalName
+  externalName: net.ghp.yimian.xyz
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: net-ing
+  annotations:
+    kubernetes.io/ingress.class: "nginx"    
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/upstream-vhost: net.ghp.yimian.xyz
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+spec:
+  rules:
+  - host: net.yimian.xyz
+    http:
+      paths:
+      - path: /v-usa/abcdefg(.*)
+        pathType: Exact
+        backend:
+          service:
+            name: v-usa-svc
+            port:
+              number: 80
+      - path: /v-china/abcdefg(.*)
+        pathType: Exact
+        backend:
+          service:
+            name: v-china-svc
+            port:
+              number: 80
+      - path: /v-china-tunnel/abcdefg(.*)
+        pathType: Exact
+        backend:
+          service:
+            name: v-china-svc
+            port:
+              number: 81
+      - path: /v-usa-tunnel/abcdefg(.*)
+        pathType: Exact
+        backend:
+          service:
+            name: v-usa-svc
+            port:
+              number: 81
+      - path: /(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: net-yimian-xyz-svc
+            port: 
+              number: 80

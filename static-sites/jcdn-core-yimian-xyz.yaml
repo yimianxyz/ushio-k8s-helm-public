@@ -1,0 +1,32 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: jcdn-core-yimian-xyz-svc
+  namespace: static-sites
+spec:
+  type: ExternalName
+  externalName: cdn.jsdelivr.net
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: jcdn-core-yimian-xyz-ing
+  namespace: static-sites
+  annotations:
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+    nginx.ingress.kubernetes.io/ssl-passthrough: "true"
+    nginx.ingress.kubernetes.io/upstream-vhost: cdn.jsdelivr.net
+    nginx.ingress.kubernetes.io/rewrite-target: /npm/ushio$1
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: jcdn-core.yimian.xyz
+    http:
+      paths:
+        - path: /(.*)
+          pathType: Prefix
+          backend:
+            service:
+              name: jcdn-core-yimian-xyz-svc
+              port: 
+                number: 443

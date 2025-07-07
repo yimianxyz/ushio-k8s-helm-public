@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka
+  namespace: logging
+spec:
+  type: ExternalName
+  externalName: kafka.mq.svc.cluster.local
+  ports:
+  - port: 9092

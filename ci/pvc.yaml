@@ -1,0 +1,35 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: drone-pv
+spec:
+  storageClassName: drone-sc
+  capacity:
+    storage: 20Gi
+  accessModes:
+  - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  hostPath:
+    path: /path/to/drone/data
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: role
+          operator: In
+          values:
+          - main
+
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: drone-pvc
+  namespace: ci
+spec:
+  storageClassName: drone-sc
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi 

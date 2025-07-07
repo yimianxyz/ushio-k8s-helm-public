@@ -1,0 +1,14 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: iotcat-me-cert
+  namespace: static-sites
+spec:
+  secretName: iotcat-me-tls
+  issuerRef:
+    name: dnspod
+    kind: ClusterIssuer
+    group: cert-manager.io
+  dnsNames:
+  - "iotcat.me"
+  - "*.iotcat.me"

@@ -1,0 +1,275 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v-usa
+data:
+  config.json: |
+    {
+        "stats": {},
+        "api": {
+            "tag": "api",
+            "services": [
+                "HandlerService",
+                "LoggerService",
+                "StatsService"
+            ]
+        },
+        "policy": {
+            "levels": {
+                "0": {
+                    "statsUserUplink": true,
+                    "statsUserDownlink": true
+                }
+            }
+        },
+        "log": {
+            "loglevel": "warning"
+        },
+        "reverse": {
+            "portals": [
+                {
+                    "tag": "portal",
+                    "domain": "usa-usa.tunnel.yimian.xyz"
+                }
+            ]
+        },
+        "inbounds": [
+            {
+                "port": 80,
+                "protocol": "vmess",
+                "tag": "vm",
+                "settings": {
+                    "clients": [
+                        {
+                            "email": "user1",
+                            "id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",//user1
+                            "alterId": 0
+                        },
+                        {
+                            "email": "user2",
+                            "id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",//user2
+                            "alterId": 0
+                        },
+                        {
+                            "email": "user3",
+                            "id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",//user3
+                            "alterId": 0
+                        },
+                        {
+                            "email": "user4",
+                            "id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",//user4
+                            "alterId": 0
+                        },
+                        {
+                            "email": "user5",
+                            "id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",//user5
+                            "alterId": 0
+                        },
+                        {
+                            "email": "user6",
+                            "id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",//user6
+                            "alterId": 0
+                        },
+                        {
+                            "email": "user7",
+                            "id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",//user7
+                            "alterId": 0
+                        },
+                        {
+                            "email": "user8",
+                            "id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",//user8
+                            "alterId": 0
+                        },
+                        {
+                            "email": "user9",
+                            "id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",//user9
+                            "alterId": 0
+                        },
+                        {
+                            "email": "user10",
+                            "id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",//user10
+                            "alterId": 0
+                        },
+                        {
+                            "email": "user11",
+                            "id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",//user11
+                            "alterId": 0
+                        }
+                    ]
+                },
+                "streamSettings": {
+                    "network": "ws"
+                }
+            },
+            {
+                "listen": "127.0.0.1",
+                "port": 10085,
+                "protocol": "dokodemo-door",
+                "settings": {
+                    "address": "127.0.0.1"
+                },
+                "tag": "api"
+            },
+            {
+                "tag": "tunnel",
+                "port": 81,
+                "protocol": "vmess",
+                "settings": {
+                    "decryption": "none",
+                    "clients": [
+                        {
+                            "id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                        }
+                    ]
+                },
+                "streamSettings": {
+                    "network": "ws"
+                }
+            }
+        ],
+        "outbounds": [
+            {
+                "tag": "direct",
+                "protocol": "freedom",
+                "settings": {
+                    "domainStrategy": "UseIP"
+                }
+            },
+            {
+                "protocol": "blackhole",
+                "settings": {},
+                "tag": "blocked"
+            }
+        ],
+        "dns": {
+            "servers": [
+                "localhost"
+            ]
+        },
+        "routing": {
+            "domainStrategy": "IPOnDemand",
+            "rules": [
+                {
+                    "type": "field",
+                    "inboundTag": [
+                        "vm"
+                    ],
+                    "ip": [
+                        "geoip:private"
+                    ],
+                    "outboundTag": "blocked"
+                },
+                {
+                    "type": "field",
+                    "inboundTag": [
+                        "vm"
+                    ],
+                    "protocol": [
+                        "bittorrent"
+                    ],
+                    "outboundTag": "blocked"
+                },
+                {
+                    "type": "field",
+                    "domain": ["domain:openai.com"],
+                    "inboundTag": [
+                        "vm"
+                    ],
+                    "outboundTag": "portal"
+                },
+                {
+                    "type": "field",
+                    "inboundTag": [
+                        "tunnel"
+                    ],
+                    "domain": [
+                        "full:usa-usa.tunnel.yimian.xyz"
+                    ],
+                    "outboundTag": "portal"
+                },
+                {
+                    "type": "field",
+                    "inboundTag": [
+                         "api"
+                    ],
+                    "outboundTag": "api"
+                }
+            ]
+        }
+    }
+
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: v-usa-dep
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: v-usa
+  template:
+    metadata:
+      labels:
+        app: v-usa
+    spec:
+      priorityClassName: v2ray
+      tolerations:
+      - key: "node-role.kubernetes.io/small"
+        operator: "Exists"
+        effect: "NoSchedule"
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            preference:
+              matchExpressions:
+              - key: v2ray
+                operator: Exists
+      containers:
+      - name: v-usa
+        image: v2fly/v2fly-core:v5.1.0
+        imagePullPolicy: IfNotPresent
+        command: ["v2ray"]
+        args: ["run", "-c", "/etc/v2ray/config.json"]
+        resources:
+          requests:
+            memory: "100Mi"
+          limits:
+            memory: "100Mi"
+        ports:
+        - name: vmess
+          containerPort: 80
+          protocol: TCP
+        - name: tunnel
+          containerPort: 81
+          protocol: TCP
+        volumeMounts:
+        - name: v-usa-conf
+          mountPath: /etc/v2ray/config.json
+          subPath: config.json
+      volumes:
+      - name: v-usa-conf
+        configMap:
+          name: v-usa
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: v-usa-svc
+spec:
+  type: ClusterIP
+  ports:
+    - name: vmess
+      protocol: TCP
+      port: 80
+      targetPort: 80
+    - name: tunnel
+      protocol: TCP
+      port: 81
+      targetPort: 81
+  selector:
+    app: v-usa

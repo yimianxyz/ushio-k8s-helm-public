@@ -1,0 +1,12 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: v2ray-yimian-xyz-ing
+  namespace: static-sites
+  annotations:
+    nginx.ingress.kubernetes.io/server-snippet: |
+      return 301 https://net.yimian.xyz$request_uri;
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: v2ray.yimian.xyz

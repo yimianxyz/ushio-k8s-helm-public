@@ -1,0 +1,19 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: frp-dashboard
+  annotations:
+    kubernetes.io/ingress.class: "nginx"    
+spec:
+  rules:
+  - host: frp.yimian.xyz
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: frps-svc
+            port:
+              number: 80
+

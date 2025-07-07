@@ -1,0 +1,29 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: blog-yimian-xyz-svc
+  namespace: static-sites
+spec:
+  type: ExternalName
+  externalName: www.eee.dog
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: blog-yimian-xyz-ing
+  namespace: static-sites
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: https://www.eee.dog/
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: blog.yimian.xyz
+    http:
+      paths:
+        - path: /(.*)
+          pathType: Prefix
+          backend:
+            service:
+              name: blog-yimian-xyz-svc
+              port: 
+                number: 443

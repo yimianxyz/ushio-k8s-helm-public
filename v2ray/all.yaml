@@ -1,0 +1,111 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v-usa-tunnel
+data:
+  config.json: |
+    {
+        "log": {
+            "loglevel": "warning"
+        },
+        "reverse": {
+            "bridges": [
+                {
+                    "tag": "bridge",
+                    "domain": "usa-usa.tunnel.yimian.xyz"
+                }
+            ]
+        },
+        "outbounds": [
+            {
+                "tag": "tunnel",
+                "protocol": "vmess",
+                "settings": {
+                  "vnext": [
+                      {
+                            "address": "net.yimian.xyz",
+                            "port": 80,
+                            "users": [
+                                {
+                                    "id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+                                    "encryption": "none"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "streamSettings": {
+                    "network": "ws",
+                    "wsSettings": {
+                        "connectionReuse": true,
+                    "path": "/v-usa-tunnel/abcdefg"
+                    }
+                }
+            },
+            {
+                "protocol": "freedom",
+                "settings": {
+                },
+                "tag": "out"
+            }
+        ],
+        "dns": {
+            "servers": [
+                "localhost"
+            ]
+        },
+        "routing": {
+            "domainStrategy": "IPOnDemand",
+            "rules": [
+                {
+                    "type": "field",
+                    "inboundTag": ["bridge"],
+                    "domain": ["full:usa-usa.tunnel.yimian.xyz"],
+                    "outboundTag": "tunnel"
+                },
+                {
+                    "type": "field",
+                    "inboundTag": ["bridge"],
+                    "outboundTag": "out"
+                }
+            ]
+        }
+    }
+
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: v-usa-tunnel-dep
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: v-usa-tunnel
+  template:
+    metadata:
+      labels:
+        app: v-usa-tunnel
+    spec:
+      containers:
+      - name: v-usa
+        image: v2fly/v2fly-core:v5.1.0
+        imagePullPolicy: IfNotPresent
+        command: ["v2ray"]
+        args: ["run", "-c", "/etc/v2ray/config.json"]
+        resources:
+          requests:
+            memory: "100Mi"
+          limits:
+            memory: "100Mi"
+        ports:
+        volumeMounts:
+        - name: v-usa-tunnel-conf
+          mountPath: /etc/v2ray/config.json
+          subPath: config.json
+      volumes:
+      - name: v-usa-tunnel-conf
+        configMap:
+          name: v-usa-tunnel 

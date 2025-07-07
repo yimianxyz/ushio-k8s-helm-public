@@ -1,0 +1,74 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: elastic-pv
+spec:
+  storageClassName: ""
+  capacity:
+    storage: 150Gi
+  accessModes:
+  - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  hostPath:
+    path: /path/to/elastic/data
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: role
+          operator: In
+          values:
+          - main
+
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: elastic-pvc
+  namespace: logging
+spec:
+  storageClassName: ""
+  volumeName: elastic-pv
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 150Gi
+---
+
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: kibana-pv
+spec:
+  storageClassName: ""
+  capacity:
+    storage: 10Gi
+  accessModes:
+  - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  hostPath:
+    path: /path/to/kibana/data
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: role
+          operator: In
+          values:
+          - main
+
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: kibana-pvc
+  namespace: logging
+spec:
+  storageClassName: ""
+  volumeName: kibana-pv
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi 

@@ -1,0 +1,32 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: share-yimian-xyz-svc
+  namespace: static-sites
+spec:
+  type: ExternalName
+  externalName: iotcat.github.io
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: share-yimian-xyz-ing
+  namespace: static-sites
+  annotations:
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+    nginx.ingress.kubernetes.io/ssl-passthrough: "true"
+    nginx.ingress.kubernetes.io/upstream-vhost: iotcat.github.io
+    nginx.ingress.kubernetes.io/rewrite-target: /ushio-filebed/$1
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: share.yimian.xyz
+    http:
+      paths:
+        - path: /(.*)
+          pathType: Prefix
+          backend:
+            service:
+              name: share-yimian-xyz-svc
+              port: 
+                number: 443
